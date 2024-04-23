@@ -1,0 +1,10 @@
+{
+  "local": {
+    "dynamo_info": {"access_key": "fakeMyKeyId",
+                    "secret_access_key": "fakeSecretAccessKey",
+                    "region_name":"fake-region-1",
+                    "endpoint_url":"http://localhost:8000"},
+    "openai_secret": "<<YOUR_OPENAI_API_KEY>>",
+    "logging_level": "INFO"
+  }
+}
