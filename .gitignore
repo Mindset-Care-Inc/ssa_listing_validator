@@ -152,6 +152,12 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
+# Don't check in local edits to the config.json
+config.json
+
+# Ignore changes to vscode configs
+.vscode/
+
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
 #  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
