@@ -18,3 +18,8 @@ After creating a python virtualenv using the contents of the requirements.txt fi
 
 # Untrack Config File
 In case you don't want to have your local changes to config.json commited, you can use the following command to have it always ignored when making new changes. `git update-index --assume-unchanged config.json`
+
+
+
+Must install on OSX
+brew install libmagic

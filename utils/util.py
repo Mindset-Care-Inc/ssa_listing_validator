@@ -5,6 +5,8 @@ import os
 
 from langchain_openai import OpenAI
 
+from utils.aws_util import get_secret_dict
+
 import boto3
 from boto3.resources.base import ServiceResource
 
@@ -62,14 +64,16 @@ def create_dynamo_engine(config_dict: Dict) -> ServiceResource:
 
 def create_openai_connection(openai_key: str) -> OpenAI:
 
+    open_ai_dict = get_secret_dict(openai_key)
+
     # create OpenAI connection
     openai = OpenAI(
-        openai_api_key=openai_key,
+        openai_api_key=open_ai_dict["openai_key"],
         temperature=0,
         model_name="gpt-3.5-turbo-instruct",
     )
 
-    return openai
+    return openai, open_ai_dict
 
 def logging_lv_from_str(str_in: str) -> int:
     logging_lv = logging.NOTSET

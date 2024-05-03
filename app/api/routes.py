@@ -1,9 +1,19 @@
-from flask import Blueprint, Response, jsonify
+from flask import Blueprint, Response, jsonify, render_template, request
 
 from app.model import SkeletonApp
 
 def generateAppBlueprint(app_instance: SkeletonApp):
     app_blueprint = Blueprint('app_blueprint', __name__)
+
+    @app_blueprint.route('/')
+    def index() -> Response:
+        return render_template('index.html', intro_question="Hello world!")
+    
+    @app_blueprint.route('/search_websites', methods=['POST'])
+    def search_websites() -> Response:
+        user_input = request.form['prompt']
+        result = app_instance.search_websites(user_input)
+        return jsonify({'answer':result.replace('\n', '<br>')}), 200
 
     @app_blueprint.route('/hello_world/<string:user_name>')
     def hello_world(user_name: str) -> Response:

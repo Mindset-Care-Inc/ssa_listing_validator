@@ -26,6 +26,7 @@ _service = Flask(_SERVICE_NAME)
 _app = None
 _db = None
 _openai = None
+OPENAI_SECRET = None
 
 
 def init_service() -> None:
@@ -77,13 +78,16 @@ def config_db(config_settings_dict: Dict) -> None:
 def config_openai(config_settings_dict: Dict) -> None:
     try:
         # get secret
+        global OPENAI_SECRET
         OPENAI_SECRET = config_settings_dict["openai_secret"]
         _logger.debug(f"Establishing a connect to OpenAI.")
 
         # create OpenAI connection
         global _openai
-        _openai = create_openai_connection(OPENAI_SECRET)
+        _openai, openai_dict = create_openai_connection(OPENAI_SECRET)
         _logger.info(f"Connection to OpenAI established.")
+
+        OPENAI_SECRET = openai_dict['openai_key']
 
     except Exception as e:
         raise e
@@ -91,7 +95,8 @@ def config_openai(config_settings_dict: Dict) -> None:
 def create_config_parameters() -> Dict:
     return {
         'runtime_env': f"{_RUNTIME_ENV}",
-        'logging_level': f"{_LOG_LV}"
+        'logging_level': f"{_LOG_LV}",
+        'open_ai_key': f"{OPENAI_SECRET}"
     }
 
 #  main thread of execution to start the server
