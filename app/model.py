@@ -9,6 +9,20 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from boto3.resources.base import ServiceResource
 from boto3.dynamodb.conditions import Key
 
+import langchain
+
+from langchain import OpenAI
+from langchain.chains import RetrievalQAWithSourcesChain
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+
+from langchain.embeddings import OpenAIEmbeddings
+from langchain.vectorstores import FAISS
+
+from langchain_community.document_loaders import UnstructuredURLLoader
+
+import pickle
+import time
+
 from app.api.entities import User
 
 _logger = logging.getLogger(__name__)
@@ -37,6 +51,46 @@ class SkeletonApp():
             'request_id': str(request_id),
             'response':response
         })
+    
+    def search_websites(self, user_input: str) -> None:
+        vectorstore_openai = self.create_embeddings()
+
+        chain = RetrievalQAWithSourcesChain.from_llm(llm=self.openai, retriever=vectorstore_openai.as_retriever())
+        langchain.debug=True
+        result = chain({"question": user_input}, return_only_outputs=True)
+
+        output = result["answer"]
+        output += result.get("sources", "")
+
+        return output
+
+    def create_embeddings(self):
+        file_path = "faiss_store_openai.pkl"
+        urls = [
+            'https://www.ssa.gov/disability/professionals/bluebook/5.00-Digestive-Adult.htm'
+        ]
+        # load data
+        loader = UnstructuredURLLoader(urls=urls)
+        data = loader.load()
+        # split data
+        text_splitter = RecursiveCharacterTextSplitter(
+            separators=['\n\n', '\n', '.', ','],
+            chunk_size=1000
+        )
+        docs = text_splitter.split_documents(data)
+        # create embeddings and save it to FAISS index
+
+        
+        embeddings = OpenAIEmbeddings(openai_api_key=self.config_dict['open_ai_key'])
+        vectorstore_openai = FAISS.from_documents(docs, embeddings)
+        time.sleep(5)
+
+        return vectorstore_openai
+        
+
+        # Save the FAISS index to a pickle file
+        #with open(file_path, "wb") as f:
+        #    pickle.dump(vectorstore_openai, f)
     
     def get_response_count_by_user(self, name: str) -> int:
         # Define the table name
