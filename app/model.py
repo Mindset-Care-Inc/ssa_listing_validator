@@ -23,7 +23,7 @@ from langchain_community.document_loaders import UnstructuredURLLoader
 import pickle
 import time
 
-from app.api.entities import User
+from app.api.entities import User,FeedBack
 
 _logger = logging.getLogger(__name__)
 
@@ -39,6 +39,11 @@ class SkeletonApp():
         record = User(name, response)
         self.store_user_record(record)
         return response
+
+    def store_user_feedback(self, question: str, answer:str,feedback:str) -> str:
+        record = FeedBack(question, answer,feedback)
+        self.store_user_feedback_db(record)
+        return 'saved to db'
     
     def store_user_record(self, user: User) -> None:
         request_id = uuid.uuid4()
@@ -51,6 +56,19 @@ class SkeletonApp():
             'request_id': str(request_id),
             'response':response
         })
+
+
+    def store_user_feedback_db(self, user: User) -> None:
+        request_id = uuid.uuid4()
+
+        # Define the table name
+        table = self.database.Table("skeleton_app_table")
+        table.put_item(Item={
+            'user_name': user.question,
+            'request_id': str(request_id),
+            'response':user.answer,
+            'feedback': user.feedback
+        })
     
     def search_websites(self, user_input: str) -> None:
         vectorstore_openai = self.create_embeddings()
@@ -58,16 +76,49 @@ class SkeletonApp():
         chain = RetrievalQAWithSourcesChain.from_llm(llm=self.openai, retriever=vectorstore_openai.as_retriever())
         langchain.debug=True
         result = chain({"question": user_input}, return_only_outputs=True)
-
-        output = result["answer"]
-        output += result.get("sources", "")
-
+        # output={}
+        # print('type',type(result["answer"]))
+        # print('type',type(result.get("sources", "")))
+        # output['answer'] = result["answer"]
+        # output['Citations'] = result.get("sources", "")
+        # print(output)
+        output = [result['answer'],result.get("sources", "")] 
         return output
 
     def create_embeddings(self):
         file_path = "faiss_store_openai.pkl"
         urls = [
-            'https://www.ssa.gov/disability/professionals/bluebook/5.00-Digestive-Adult.htm'
+            'https://www.ssa.gov/disability/professionals/bluebook/5.00-Digestive-Adult.htm',
+            'https://www.ssa.gov/disability/professionals/bluebook/1.00-Musculoskeletal-Adult.htm',
+            'https://www.ssa.gov/disability/professionals/bluebook/2.00-SpecialSensesandSpeech-Adult.htm',
+            'https://www.ssa.gov/disability/professionals/bluebook/3.00-Respiratory-Adult.htm',
+            'https://www.ssa.gov/disability/professionals/bluebook/4.00-Cardiovascular-Adult.htm',
+            'https://www.ssa.gov/disability/professionals/bluebook/6.00-Genitourinary-Adult.htm',
+            'https://www.ssa.gov/disability/professionals/bluebook/7.00-HematologicalDisorders-Adult.htm',
+            'https://www.ssa.gov/disability/professionals/bluebook/8.00-Skin-Adult.htm',
+            'https://www.ssa.gov/disability/professionals/bluebook/9.00-Endocrine-Adult.htm',
+            'https://www.ssa.gov/disability/professionals/bluebook/10.00-MultipleBody-Adult.htm',
+            'https://www.ssa.gov/disability/professionals/bluebook/11.00-Neurological-Adult.htm',
+            'https://www.ssa.gov/disability/professionals/bluebook/12.00-MentalDisorders-Adult.htm',
+            'https://www.ssa.gov/disability/professionals/bluebook/13.00-NeoplasticDiseases-Malignant-Adult.htm',
+            'https://www.ssa.gov/disability/professionals/bluebook/14.00-Immune-Adult.htm'
+
+            'https://www.ssa.gov/disability/professionals/bluebook/100.00-GrowthImpairment-Childhood.htm',
+            'https://www.ssa.gov/disability/professionals/bluebook/101.00-Musculoskeletal-Childhood.htm',
+            'https://www.ssa.gov/disability/professionals/bluebook/102.00-SpecialSensesandSpeech-Childhood.htm',
+            'https://www.ssa.gov/disability/professionals/bluebook/103.00-Respiratory-Childhood.htm',
+            'https://www.ssa.gov/disability/professionals/bluebook/104.00-Cardiovascular-Childhood.htm',
+            'https://www.ssa.gov/disability/professionals/bluebook/105.00-Digestive-Childhood.htm',
+            'https://www.ssa.gov/disability/professionals/bluebook/106.00-Genitourinary-Childhood.htm',
+            'https://www.ssa.gov/disability/professionals/bluebook/107.00-HematologicalDisorders-Childhood.htm',
+            'https://www.ssa.gov/disability/professionals/bluebook/108.00-Skin-Childhood.htm',
+            'https://www.ssa.gov/disability/professionals/bluebook/109.00-Endocrine-Childhood.htm',
+            'https://www.ssa.gov/disability/professionals/bluebook/110.00-MultipleBody-Childhood.htm',
+            'https://www.ssa.gov/disability/professionals/bluebook/111.00-Neurological-Childhood.htm',
+            'https://www.ssa.gov/disability/professionals/bluebook/112.00-MentalDisorders-Childhood.htm',
+            'https://www.ssa.gov/disability/professionals/bluebook/113.00-NeoplasticDiseases-Malignant-Childhood.htm',
+            'https://www.ssa.gov/disability/professionals/bluebook/114.00-Immune-Childhood.htm'
+
         ]
         # load data
         loader = UnstructuredURLLoader(urls=urls)

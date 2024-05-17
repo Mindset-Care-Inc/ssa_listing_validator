@@ -84,10 +84,10 @@ def config_openai(config_settings_dict: Dict) -> None:
 
         # create OpenAI connection
         global _openai
-        _openai, openai_dict = create_openai_connection(OPENAI_SECRET)
+        _openai = create_openai_connection(OPENAI_SECRET)
         _logger.info(f"Connection to OpenAI established.")
 
-        OPENAI_SECRET = openai_dict['openai_key']
+        
 
     except Exception as e:
         raise e
