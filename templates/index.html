@@ -46,18 +46,9 @@
     <br>
     <br>
     <h1 class="mt-5" style="color: #77d4b1;">Thank you considering Mindset!</h1>
-    <p class="lead">Welcome to the Mindset Intake chat bot! It can help you through a quick set of questions that will take less than 2 minutes to complete to see which Social Security Disability benefits program you or your loved one may be eligible for.
+    <p class="lead">Welcome to the Mindset Intake chat bot! It can help you through a quick set of questions that will take less than 2 minutes to complete to see which Social Security Disability benefits program you or your loved ones may be eligible for.
     </p>
 
-    <div class="input-group mb-3">
-        <input type="text" class="form-control" id="chat-input1">
-      </div>
-      <div class="input-group mb-3">
-        <input type="text" class="form-control" id="chat-input2">
-      </div>
-      <div class="input-group mb-3">
-        <input type="text" class="form-control" id="chat-input3">
-      </div>
 
 
     <div id="list-group" class="list-group w-auto">
@@ -96,18 +87,87 @@
     </script>
 
     <script>
+      const addInput = (question,answer) =>{
+        console.log('konsaul log')
+        const containerDiv = document.createElement("div");
+        containerDiv.classList.add("input-group", "mb-3");
+
+        const inputBox = document.createElement("input");
+        inputBox.type = "text";
+        inputBox.placeholder = "Please enter your feedback";
+        inputBox.id = "user-feedback"; // Assign id to the input box
+        inputBox.classList.add("form-control");
+
+        inputBox.addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                collectFeedback();
+            }
+        });
+
+        const inputGroupAppend = document.createElement("div");
+        inputGroupAppend.classList.add("input-group-append");
+
+        const submitButton = document.createElement("button");
+        submitButton.textContent = "Submit Feedback";
+        submitButton.id = "submit-btn";
+        submitButton.classList.add("btn", "btn-custom");
+        submitButton.onclick = collectFeedback;
+       
+
+        inputGroupAppend.appendChild(submitButton);
+        containerDiv.appendChild(inputBox);
+        containerDiv.appendChild(inputGroupAppend);
+
+        $("#list-group").append(containerDiv);
+
+        function collectFeedback() {
+        // Get the value from the input box
+          const feedbackText = inputBox.value;
+
+          // Check if the input is not empty
+          if (feedbackText.trim() !== "") {
+              //Database integration
+              $.ajax({
+                type: "POST",
+                url: `/submit_user_feedback`,
+                data: {'question': question, 'answer':answer,'feedback':feedbackText},
+                success: function(result) {
+                    alert(result);
+                }
+            });
+            
+            $(inputBox).remove();
+            $(submitButton).remove();
+
+          }
+
+          // Clear the input box
+          inputBox.value = "";
+  }
+
+  }
+
+  
+
+      
+    </script>
+
+    <script>
         $("#gpt-button").click(function(){
             var question = $("#chat-input").val();
             let html_data = '';
             html_data += `<a href="#" class="list-group-item list-group-item-action d-flex gap-3 py-3">
-                <img src="{{ url_for('static', filename='images/user_icon.jpeg') }}" alt="twbs" width="32" height="32" class="rounded-circle flex-shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" class="rounded-circle flex-shrink-0 fill="currentColor" class="bi bi-person" viewBox="0 0 16 16">
+  <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z"/>
+</svg>
+                
                 <div class="d-flex gap-2 w-100 justify-content-between">
                     <div>
                         <p class="mb-0 opacity-75">${question}</p>
                     </div>
                 </div>
             </a>`;
-            $("#chat-input").val('');
+            
             $("#list-group").append(html_data);
 
             $.ajax({
@@ -115,19 +175,34 @@
                 url: "/search_websites",
                 data: {'prompt': question},
                 success: function(data) {
+                    let escapedAnswer = data.answer.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                    let escapedInput = $("#chat-input").val()
                     let chatbot_data = '';
                     chatbot_data += `
-                    <a href="#" class="list-group-item list-group-item-action d-flex gap-3 py-3">
+                    <div class="list-group-item list-group-item-action d-flex gap-3 py-3">
                         <img src="https://mindset.care/favicon.png" alt="twbs" width="32" height="32" class="rounded-circle flex-shrink-0">
                         <div class="d-flex gap-2 w-100 justify-content-between">
                             <div>
                                 <p class="mb-0 opacity-75">${data.answer}</p>
+                                <br>
+                                <p>Citations:</p>
+                                <ul>
+                                <li> <a href=${data.Citations} class="mb-0 opacity-75"> ${data.Citations}</a></li>
+                                </ul> 
+                                <p style="cursor: pointer; height: 15px; width: 15px;" class="user-feedback" onclick="addInput('${$("#chat-input").val('')}' , '${data.answer}')" >👎</p>
+                                <br>
                             </div>
                         </div>
-                    </a>`;
+                      </div>
+                    `;
+
+                    console.log('escapedAnswer',escapedAnswer);
+                    console.log('chatbot_data',chatbot_data);
+                    $("#chat-input").val('');
                     $("#list-group").append(chatbot_data)
                 }
             });
+            
         });
     </script>
 
